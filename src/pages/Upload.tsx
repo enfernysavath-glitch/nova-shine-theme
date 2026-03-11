@@ -56,30 +56,31 @@ export default function Upload() {
         const apiResult = await analyzeFile(fileObj);
 
         if (apiResult) {
-          console.log("[TuneTrace] Backend response mapped successfully:", apiResult);
+          console.log("[TuneTrace] ✅ Backend result — analysisSource:", apiResult.analysisSource);
+          console.log("[TuneTrace] Navigating to results with backend data");
           navigate(`/results/${apiResult.id}`, { state: { result: apiResult } });
           return;
         }
       }
 
-      console.log("[TuneTrace] Using mock analysis data");
+      console.log("[TuneTrace] ⚠️ No backend configured, source chosen: mock");
       const mockResult = generateMockAnalysis(fileName, fileSize);
       navigate(`/results/${mockResult.id}`, { state: { result: mockResult } });
     } catch (err) {
       if (err instanceof AnalyzeRequestError) {
-        console.warn("[TuneTrace] Backend request failed, falling back to mock:", err);
+        console.warn("[TuneTrace] ⚠️ Backend request failed, source chosen: mock —", err.message);
         const mockResult = generateMockAnalysis(fileName, fileSize);
         navigate(`/results/${mockResult.id}`, { state: { result: mockResult } });
         return;
       }
 
       if (err instanceof AnalyzeParseError) {
-        console.error("[TuneTrace] Frontend parsing/mapping error:", err);
+        console.error("[TuneTrace] ❌ Parse error (not falling back to mock):", err.message);
         setError("Analysis response format is invalid. Please try again.");
         return;
       }
 
-      console.error("[TuneTrace] Unexpected error during analysis:", err);
+      console.error("[TuneTrace] ❌ Unexpected error:", err);
       setError(err instanceof Error ? err.message : "Analysis failed unexpectedly.");
     } finally {
       window.clearInterval(stepInterval);
