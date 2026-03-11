@@ -13,6 +13,9 @@ export interface AnalysisResult {
   spectrum: number[];
   duration: string;
   key: string;
+  bassIntensity: number;
+  brightness: number;
+  confidence: number;
 }
 
 const moods = [
@@ -22,7 +25,7 @@ const moods = [
   { label: "Dark", emoji: "🌑" },
   { label: "Dreamy", emoji: "✨" },
   { label: "Aggressive", emoji: "🔥" },
-  { label: "Chill", emoji: "🌊" },
+  { label: "Calm", emoji: "🌊" },
   { label: "Euphoric", emoji: "🎆" },
 ];
 
@@ -60,5 +63,8 @@ export function generateMockAnalysis(fileName: string, fileSize: number): Analys
     spectrum,
     duration: `${minutes}:${seconds.toString().padStart(2, "0")}`,
     key: `${keys[Math.floor(Math.random() * keys.length)]} ${scales[Math.floor(Math.random() * scales.length)]}`,
+    bassIntensity: Math.floor(Math.random() * 40) + 40,
+    brightness: Math.floor(Math.random() * 50) + 30,
+    confidence: Math.floor(Math.random() * 15) + 78,
   };
 }

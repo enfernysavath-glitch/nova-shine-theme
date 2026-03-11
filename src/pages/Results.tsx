@@ -1,8 +1,22 @@
 import { useParams, Link } from "react-router-dom";
 import { getAnalysisById } from "@/lib/storage";
 import { SpectrumVisualizer } from "@/components/SpectrumVisualizer";
-import { Activity, ArrowLeft, Music, Zap, Radio, Clock, FileAudio, Gauge } from "lucide-react";
+import {
+  Activity, ArrowLeft, Music, Zap, Radio, Clock, FileAudio,
+  Gauge, BarChart3, Sun, Volume2, ShieldCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+function MetricBar({ value, max = 100 }: { value: number; max?: number }) {
+  return (
+    <div className="h-1.5 rounded-full bg-border overflow-hidden mt-2">
+      <div
+        className="h-full rounded-full bg-gradient-to-r from-cyan-dim to-cyan-glow gentle-animation"
+        style={{ width: `${(value / max) * 100}%` }}
+      />
+    </div>
+  );
+}
 
 export default function Results() {
   const { id } = useParams<{ id: string }>();
@@ -10,9 +24,9 @@ export default function Results() {
 
   if (!result) {
     return (
-      <div className="pt-16 min-h-screen flex items-center justify-center">
+      <div className="pt-14 min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-muted-foreground text-lg">Analysis not found</p>
+          <p className="text-muted-foreground">Analysis not found</p>
           <Button asChild variant="outline">
             <Link to="/upload">Upload a new track</Link>
           </Button>
@@ -29,108 +43,135 @@ export default function Results() {
       : "text-amber-400";
 
   return (
-    <div className="pt-16 min-h-screen">
-      <div className="max-w-4xl mx-auto px-4 py-10">
+    <div className="pt-14 min-h-screen">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Back */}
         <Link
           to="/upload"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground gentle-animation mb-8"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground gentle-animation mb-6"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to upload
+          <ArrowLeft className="w-3.5 h-3.5" /> Back
         </Link>
 
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <FileAudio className="w-5 h-5 text-primary" />
-              <span className="text-sm text-muted-foreground font-mono">{result.fileSize} · {result.duration}</span>
+            <div className="flex items-center gap-2 mb-1">
+              <FileAudio className="w-4 h-4 text-primary" />
+              <span className="text-xs text-muted-foreground font-mono">{result.fileSize} · {result.duration}</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{result.fileName}</h1>
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight">{result.fileName}</h1>
           </div>
-          <span className="text-xs text-muted-foreground font-mono">
-            {new Date(result.analyzedAt).toLocaleString()}
-          </span>
-        </div>
-
-        {/* Main stats grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {/* Tuning */}
-          <div className="p-5 rounded-xl bg-card border border-border">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium mb-3">
-              <Radio className="w-3.5 h-3.5" /> TUNING
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 border border-primary/20 text-xs font-medium text-primary">
+              <ShieldCheck className="w-3 h-3" />
+              {result.confidence}% confidence
             </div>
-            <p className={`text-3xl font-bold font-mono ${tuningColor}`}>
-              {result.tuningReference} <span className="text-base">Hz</span>
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {result.tuningDeviation > 0 ? "+" : ""}
-              {result.tuningDeviation} cents deviation
-            </p>
-          </div>
-
-          {/* BPM */}
-          <div className="p-5 rounded-xl bg-card border border-border">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium mb-3">
-              <Activity className="w-3.5 h-3.5" /> BPM
-            </div>
-            <p className="text-3xl font-bold font-mono text-foreground">{result.bpm}</p>
-            <p className="text-xs text-muted-foreground mt-1">beats per minute</p>
-          </div>
-
-          {/* Energy */}
-          <div className="p-5 rounded-xl bg-card border border-border">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium mb-3">
-              <Zap className="w-3.5 h-3.5" /> ENERGY
-            </div>
-            <p className="text-3xl font-bold font-mono text-foreground">{result.energy}%</p>
-            <div className="mt-2 h-1.5 rounded-full bg-border overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-cyan-dim to-cyan-glow"
-                style={{ width: `${result.energy}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Mood */}
-          <div className="p-5 rounded-xl bg-card border border-border">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium mb-3">
-              <Music className="w-3.5 h-3.5" /> MOOD
-            </div>
-            <p className="text-3xl font-bold">
-              {result.moodEmoji}
-            </p>
-            <p className="text-sm font-medium mt-1">{result.mood}</p>
+            <span className="text-xs text-muted-foreground font-mono">
+              {new Date(result.analyzedAt).toLocaleDateString()}
+            </span>
           </div>
         </div>
 
-        {/* Key & Detail row */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-          <div className="p-5 rounded-xl bg-card border border-border">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium mb-3">
-              <Gauge className="w-3.5 h-3.5" /> KEY
+        {/* Primary metrics */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          <div className="p-4 rounded-xl bg-card border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-medium uppercase tracking-wider mb-2">
+              <Radio className="w-3 h-3" /> Est. Tuning
             </div>
-            <p className="text-2xl font-bold font-mono">{result.key}</p>
+            <p className={`text-2xl font-bold font-mono ${tuningColor}`}>
+              {result.tuningReference}<span className="text-sm ml-0.5">Hz</span>
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {result.tuningDeviation > 0 ? "+" : ""}{result.tuningDeviation} cents offset
+            </p>
           </div>
-          <div className="p-5 rounded-xl bg-card border border-border">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium mb-3">
-              <Clock className="w-3.5 h-3.5" /> DURATION
+
+          <div className="p-4 rounded-xl bg-card border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-medium uppercase tracking-wider mb-2">
+              <Activity className="w-3 h-3" /> BPM
             </div>
-            <p className="text-2xl font-bold font-mono">{result.duration}</p>
+            <p className="text-2xl font-bold font-mono">{result.bpm}</p>
+            <p className="text-[11px] text-muted-foreground mt-1">beats per minute</p>
           </div>
-          <div className="p-5 rounded-xl bg-card border border-border col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium mb-3">
-              <Radio className="w-3.5 h-3.5" /> TUNING NOTE
+
+          <div className="p-4 rounded-xl bg-card border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-medium uppercase tracking-wider mb-2">
+              <Zap className="w-3 h-3" /> Energy
             </div>
-            <p className="text-sm text-muted-foreground">{result.tuningLabel}</p>
+            <p className="text-2xl font-bold font-mono">{result.energy}<span className="text-sm">%</span></p>
+            <MetricBar value={result.energy} />
+          </div>
+
+          <div className="p-4 rounded-xl bg-card border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-medium uppercase tracking-wider mb-2">
+              <Music className="w-3 h-3" /> Mood
+            </div>
+            <p className="text-lg font-bold">
+              {result.moodEmoji} <span className="text-base">{result.mood}</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Secondary metrics */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div className="p-4 rounded-xl bg-card border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-medium uppercase tracking-wider mb-2">
+              <Gauge className="w-3 h-3" /> Key
+            </div>
+            <p className="text-lg font-bold font-mono">{result.key}</p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-card border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-medium uppercase tracking-wider mb-2">
+              <Clock className="w-3 h-3" /> Duration
+            </div>
+            <p className="text-lg font-bold font-mono">{result.duration}</p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-card border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-medium uppercase tracking-wider mb-2">
+              <Volume2 className="w-3 h-3" /> Bass
+            </div>
+            <p className="text-lg font-bold font-mono">{result.bassIntensity}<span className="text-xs">%</span></p>
+            <MetricBar value={result.bassIntensity} />
+          </div>
+
+          <div className="p-4 rounded-xl bg-card border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-medium uppercase tracking-wider mb-2">
+              <Sun className="w-3 h-3" /> Brightness
+            </div>
+            <p className="text-lg font-bold font-mono">{result.brightness}<span className="text-xs">%</span></p>
+            <MetricBar value={result.brightness} />
+          </div>
+        </div>
+
+        {/* Tuning note + Confidence detail */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <div className="p-4 rounded-xl bg-card border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-medium uppercase tracking-wider mb-2">
+              <Radio className="w-3 h-3" /> Tuning Reference
+            </div>
+            <p className="text-sm text-foreground">{result.tuningLabel}</p>
+            <p className="text-[11px] text-muted-foreground mt-1">Estimated closest standard reference</p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-card border border-border">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-medium uppercase tracking-wider mb-2">
+              <ShieldCheck className="w-3 h-3" /> Analysis Confidence
+            </div>
+            <p className="text-sm text-foreground">{result.confidence}% overall confidence</p>
+            <MetricBar value={result.confidence} />
           </div>
         </div>
 
         {/* Spectrum */}
-        <div className="p-6 rounded-xl bg-card border border-border">
-          <h3 className="text-sm font-medium text-muted-foreground mb-4">FREQUENCY SPECTRUM</h3>
-          <SpectrumVisualizer data={result.spectrum} height={160} />
-          <div className="flex justify-between text-xs text-muted-foreground mt-3 font-mono">
+        <div className="p-5 rounded-xl bg-card border border-border mb-6">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] font-medium uppercase tracking-wider mb-4">
+            <BarChart3 className="w-3 h-3" /> Frequency Spectrum
+          </div>
+          <SpectrumVisualizer data={result.spectrum} height={140} />
+          <div className="flex justify-between text-[10px] text-muted-foreground mt-2 font-mono">
             <span>20 Hz</span>
             <span>500 Hz</span>
             <span>2 kHz</span>
@@ -140,9 +181,9 @@ export default function Results() {
         </div>
 
         {/* Actions */}
-        <div className="mt-8 flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Button asChild className="bg-primary text-primary-foreground hover:bg-cyan-glow glow-cyan">
-            <Link to="/upload">Analyze Another</Link>
+            <Link to="/upload">Analyze Another Track</Link>
           </Button>
           <Button asChild variant="outline">
             <Link to="/history">View History</Link>
