@@ -50,9 +50,12 @@ export default function Upload() {
     const f = e.target.files?.[0];
     if (!f) {
       console.warn("[TuneTrace] file picker closed without selection");
+      setError("No file selected. Please choose an MP3 or WAV file.");
+      e.target.value = "";
       return;
     }
     handleFileSelected(f);
+    e.target.value = "";
   };
 
   const handleDrop = useCallback(
