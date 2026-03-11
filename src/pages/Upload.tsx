@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Upload as UploadIcon, FileAudio, Loader2, X, Play } from "lucide-react";
+import { Upload as UploadIcon, FileAudio, Loader2, X, Play, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { generateMockAnalysis } from "@/lib/mockAnalysis";
 import { analyzeFile } from "@/lib/api";
