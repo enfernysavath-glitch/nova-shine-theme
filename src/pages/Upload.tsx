@@ -63,7 +63,10 @@ export default function Upload() {
       e.preventDefault();
       setIsDragging(false);
       const f = e.dataTransfer.files[0];
-      if (!f) return;
+      if (!f) {
+        setError("No file found in drop payload. Please try again.");
+        return;
+      }
       handleFileSelected(f);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
