@@ -75,6 +75,7 @@ export default function Results() {
 
   const source = result.source ?? (result.analysisSource === "engine" ? "backend" : "mock");
   const isPreview = source === "mock";
+  const mockFallbackReason = isPreview ? result.mockFallbackReason : undefined;
 
   const tuningColor =
     result.tuningReference === 440
