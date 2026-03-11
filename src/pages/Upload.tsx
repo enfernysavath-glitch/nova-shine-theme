@@ -225,6 +225,14 @@ export default function Upload() {
           </div>
         )}
 
+        {/* Error message */}
+        {error && (
+          <div className="mt-4 w-full flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
         {/* Demo disclaimer */}
         <p className="mt-4 text-center text-[11px] text-muted-foreground/60">
           Current version uses demo analysis data for product preview.
