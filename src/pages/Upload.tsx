@@ -88,7 +88,7 @@ export default function Upload() {
         const apiResult = await analyzeFile(fileObj);
 
         if (apiResult) {
-          const backendResult = { ...apiResult, source: "backend" as const, analysisSource: "engine" as const };
+          const backendResult = { ...apiResult, source: "backend" as const, analysisSource: "engine" as const, mockFallbackReason: undefined };
           console.log("[TuneTrace] backend response received");
           console.log("[TuneTrace] chosen source: backend");
           console.log("[TuneTrace] upload finished");
@@ -97,27 +97,34 @@ export default function Upload() {
         }
       }
 
-      const mockResult = { ...generateMockAnalysis(fileName, fileSize), source: "mock" as const, analysisSource: "preview" as const };
+      const mockResult = {
+        ...generateMockAnalysis(fileName, fileSize),
+        source: "mock" as const,
+        analysisSource: "preview" as const,
+        mockFallbackReason: "Missing VITE_API_BASE_URL",
+      };
       console.log("[TuneTrace] chosen source: mock");
+      console.log("[TuneTrace] reason for mock fallback:", mockResult.mockFallbackReason);
       console.log("[TuneTrace] upload finished");
       navigate(`/results/${mockResult.id}`, { state: { result: mockResult } });
     } catch (err) {
       if (err instanceof AnalyzeRequestError) {
-        console.warn("[TuneTrace] ⚠️ Backend request failed, source chosen: mock —", err.message);
-        const mockResult = { ...generateMockAnalysis(fileName, fileSize), source: "mock" as const, analysisSource: "preview" as const };
+        const fallbackReason = err.message;
+        console.error("[TuneTrace] upload error:", fallbackReason);
+        const mockResult = {
+          ...generateMockAnalysis(fileName, fileSize),
+          source: "mock" as const,
+          analysisSource: "preview" as const,
+          mockFallbackReason: fallbackReason,
+        };
         console.log("[TuneTrace] chosen source: mock");
+        console.log("[TuneTrace] reason for mock fallback:", fallbackReason);
         console.log("[TuneTrace] upload finished");
         navigate(`/results/${mockResult.id}`, { state: { result: mockResult } });
         return;
       }
 
-      if (err instanceof AnalyzeParseError) {
-        console.error("[TuneTrace] ❌ upload error — parse:", err.message);
-        setError("Analysis response format is invalid. Please try again.");
-        return;
-      }
-
-      console.error("[TuneTrace] ❌ upload error:", err);
+      console.error("[TuneTrace] upload error:", err);
       setError(err instanceof Error ? err.message : "Analysis failed unexpectedly.");
     } finally {
       window.clearInterval(stepInterval);
