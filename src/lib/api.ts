@@ -17,6 +17,8 @@ export interface AnalyzeApiResponse {
   energy_score: number;
   confidence_score: number;
   spectrum_bands: number[];
+  mood_label?: string;
+  mood_emoji?: string;
 }
 
 /** Mood lookup derived from energy + key (placeholder until backend provides it) */
