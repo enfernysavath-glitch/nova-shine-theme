@@ -40,15 +40,20 @@ export default function Upload() {
     [handleFile]
   );
 
-  const runAnalysis = async (fileName: string, fileSize: number) => {
+  const runAnalysis = async (fileName: string, fileSize: number, fileObj?: File) => {
     setIsAnalyzing(true);
     setAnalyzeStep(0);
     for (let i = 0; i < steps.length; i++) {
       setAnalyzeStep(i);
       await new Promise((r) => setTimeout(r, 400));
     }
-    const result = generateMockAnalysis(fileName, fileSize);
-    // Don't auto-save — user decides on Results page
+
+    // Try real backend first; fall back to mock when unavailable
+    let result = fileObj ? await analyzeFile(fileObj).catch(() => null) : null;
+    if (!result) {
+      result = generateMockAnalysis(fileName, fileSize);
+    }
+
     navigate(`/results/${result.id}`, { state: { result } });
   };
 
