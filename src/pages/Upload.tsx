@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Upload as UploadIcon, FileAudio, Loader2, X, Play, Info } from "lucide-react";
+import { Upload as UploadIcon, FileAudio, Loader2, X, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { generateMockAnalysis } from "@/lib/mockAnalysis";
 import { saveAnalysis } from "@/lib/storage";
@@ -142,12 +142,11 @@ export default function Upload() {
                 <UploadIcon className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <p className="text-lg font-semibold">Drop your audio file here</p>
+                <p className="text-lg font-semibold">Upload MP3 or WAV</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Supports MP3 and WAV — up to 50 MB
+                  Drag & drop or click to browse — up to 50 MB
                 </p>
               </div>
-              <p className="text-xs text-muted-foreground/50">or click anywhere to browse</p>
             </div>
           )}
         </div>
@@ -197,12 +196,9 @@ export default function Upload() {
         )}
 
         {/* Demo disclaimer */}
-        <div className="mt-5 w-full flex items-start gap-2.5 p-3 rounded-lg bg-surface-2/50 border border-border/50 text-xs text-muted-foreground">
-          <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/50" />
-          <span>
-            This version uses mock data for demonstration. Real audio processing is coming in a future update.
-          </span>
-        </div>
+        <p className="mt-4 text-center text-[11px] text-muted-foreground/60">
+          Current version uses demo analysis data for product preview.
+        </p>
       </div>
     </div>
   );
