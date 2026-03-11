@@ -103,6 +103,7 @@ export default function Results() {
         )}
 
         {/* Header */}
+        <p className="mb-3 text-[11px] text-muted-foreground">Source: {source}</p>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/15 flex items-center justify-center shrink-0">

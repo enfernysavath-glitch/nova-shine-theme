@@ -56,20 +56,22 @@ export default function Upload() {
         const apiResult = await analyzeFile(fileObj);
 
         if (apiResult) {
-          console.log("[TuneTrace] ✅ Backend result — analysisSource:", apiResult.analysisSource);
-          console.log("[TuneTrace] Navigating to results with backend data");
-          navigate(`/results/${apiResult.id}`, { state: { result: apiResult } });
+          const backendResult = { ...apiResult, source: "backend" as const, analysisSource: "engine" as const };
+          console.log("[TuneTrace] backend response received");
+          console.log("[TuneTrace] chosen source: backend");
+          navigate(`/results/${backendResult.id}`, { state: { result: backendResult } });
           return;
         }
       }
 
-      console.log("[TuneTrace] ⚠️ No backend configured, source chosen: mock");
-      const mockResult = generateMockAnalysis(fileName, fileSize);
+      const mockResult = { ...generateMockAnalysis(fileName, fileSize), source: "mock" as const, analysisSource: "preview" as const };
+      console.log("[TuneTrace] chosen source: mock");
       navigate(`/results/${mockResult.id}`, { state: { result: mockResult } });
     } catch (err) {
       if (err instanceof AnalyzeRequestError) {
         console.warn("[TuneTrace] ⚠️ Backend request failed, source chosen: mock —", err.message);
-        const mockResult = generateMockAnalysis(fileName, fileSize);
+        const mockResult = { ...generateMockAnalysis(fileName, fileSize), source: "mock" as const, analysisSource: "preview" as const };
+        console.log("[TuneTrace] chosen source: mock");
         navigate(`/results/${mockResult.id}`, { state: { result: mockResult } });
         return;
       }
