@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Upload as UploadIcon, FileAudio, Loader2, X, Play } from "lucide-react";
+import { Upload as UploadIcon, FileAudio, Loader2, X, Play, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { generateMockAnalysis } from "@/lib/mockAnalysis";
 import { analyzeFile } from "@/lib/api";
@@ -40,21 +40,45 @@ export default function Upload() {
     [handleFile]
   );
 
+  const [error, setError] = useState<string | null>(null);
+
   const runAnalysis = async (fileName: string, fileSize: number, fileObj?: File) => {
     setIsAnalyzing(true);
+    setError(null);
     setAnalyzeStep(0);
-    for (let i = 0; i < steps.length; i++) {
-      setAnalyzeStep(i);
-      await new Promise((r) => setTimeout(r, 400));
-    }
 
-    // Try real backend first; fall back to mock when unavailable
-    let result = fileObj ? await analyzeFile(fileObj).catch(() => null) : null;
-    if (!result) {
-      result = generateMockAnalysis(fileName, fileSize);
-    }
+    try {
+      for (let i = 0; i < steps.length; i++) {
+        setAnalyzeStep(i);
+        await new Promise((r) => setTimeout(r, 400));
+      }
 
-    navigate(`/results/${result.id}`, { state: { result } });
+      let result: ReturnType<typeof generateMockAnalysis> | null = null;
+
+      if (fileObj) {
+        try {
+          const apiResult = await analyzeFile(fileObj);
+          if (apiResult) {
+            console.log("[TuneTrace] Backend response mapped successfully:", apiResult);
+            result = apiResult;
+          }
+        } catch (apiErr) {
+          console.warn("[TuneTrace] Backend request failed, falling back to mock:", apiErr);
+        }
+      }
+
+      if (!result) {
+        console.log("[TuneTrace] Using mock analysis data");
+        result = generateMockAnalysis(fileName, fileSize);
+      }
+
+      navigate(`/results/${result.id}`, { state: { result } });
+    } catch (err) {
+      console.error("[TuneTrace] Unexpected error during analysis:", err);
+      setError(err instanceof Error ? err.message : "Analysis failed unexpectedly.");
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleAnalyze = () => {
@@ -198,6 +222,14 @@ export default function Upload() {
                 </Button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <div className="mt-4 w-full flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
