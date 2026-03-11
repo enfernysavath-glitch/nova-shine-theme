@@ -221,46 +221,68 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL as string | undefined;
  */
 export async function analyzeFile(file: File): Promise<AnalysisResult | null> {
   if (!API_BASE) {
-    console.log("[TuneTrace] No VITE_API_BASE_URL configured, source chosen: mock");
+    console.warn("[TuneTrace] chosen source = mock");
+    console.warn("[TuneTrace] reason for mock fallback: Missing VITE_API_BASE_URL");
     return null;
   }
 
-  console.log("[TuneTrace] Backend request started →", `${API_BASE}/analyze`);
+  const endpoint = `${API_BASE}/analyze`;
+  console.log("[TuneTrace] request started:", endpoint);
 
   const form = new FormData();
   form.append("file", file);
 
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}/analyze`, {
+    res = await fetch(endpoint, {
       method: "POST",
       body: form,
     });
   } catch (requestErr) {
-    console.error("[TuneTrace] Network error reaching backend:", requestErr);
-    throw new AnalyzeRequestError("Failed to reach analysis backend.", { cause: requestErr });
+    const reason = "Network request failed while reaching /analyze.";
+    console.log("[TuneTrace] backend response received");
+    console.log("[TuneTrace] response status:", "network_error");
+    console.warn("[TuneTrace] validation failure:", reason);
+    console.warn("[TuneTrace] chosen source = mock");
+    console.warn("[TuneTrace] reason for mock fallback:", reason);
+    throw new AnalyzeRequestError(reason, { cause: requestErr });
   }
 
-  console.log("[TuneTrace] Backend response received, status:", res.status);
+  console.log("[TuneTrace] backend response received");
+  console.log("[TuneTrace] response status:", res.status);
 
-  if (!res.ok) throw new AnalyzeRequestError(`Analysis failed (${res.status})`);
+  const rawText = await res.text();
+  console.log("[TuneTrace] raw JSON received:", rawText);
 
-  let json: unknown;
-  try {
-    json = await res.json();
-  } catch (jsonErr) {
-    console.error("[TuneTrace] Failed to parse backend JSON:", jsonErr);
-    throw new AnalyzeParseError("Backend returned invalid JSON.", { cause: jsonErr });
+  if (!res.ok) {
+    const reason = `Backend returned non-200 status: ${res.status}`;
+    console.warn("[TuneTrace] validation failure:", reason);
+    console.warn("[TuneTrace] chosen source = mock");
+    console.warn("[TuneTrace] reason for mock fallback:", reason);
+    throw new AnalyzeRequestError(reason);
   }
 
-  console.log("[TuneTrace] Raw API response:", json);
-
+  let parsed: unknown;
   try {
-    const mapped = fromApiResponse(json as AnalyzeApiResponse);
-    console.log("[TuneTrace] Source chosen: backend — analysisSource:", mapped.analysisSource);
-    return mapped;
+    parsed = extractJsonFromResponse(rawText);
   } catch (parseErr) {
-    console.error("[TuneTrace] Failed to parse API response:", parseErr, json);
-    throw new AnalyzeParseError("Failed to parse analysis response from backend.", { cause: parseErr });
+    const reason = "Backend JSON is invalid or unparseable.";
+    console.warn("[TuneTrace] validation failure:", reason);
+    console.warn("[TuneTrace] chosen source = mock");
+    console.warn("[TuneTrace] reason for mock fallback:", reason);
+    throw new AnalyzeRequestError(reason, { cause: parseErr });
+  }
+
+  try {
+    const mapped = fromApiResponse(parsed as AnalyzeApiResponse);
+    console.log("[TuneTrace] validation success");
+    console.log("[TuneTrace] chosen source = backend");
+    return mapped;
+  } catch (validationErr) {
+    const reason = "Backend JSON failed schema validation.";
+    console.warn("[TuneTrace] validation failure:", reason);
+    console.warn("[TuneTrace] chosen source = mock");
+    console.warn("[TuneTrace] reason for mock fallback:", reason);
+    throw new AnalyzeRequestError(reason, { cause: validationErr });
   }
 }
