@@ -126,6 +126,38 @@ function readNumberArray(record: Record<string, unknown>, field: string): number
   return value;
 }
 
+function extractJsonFromResponse(responseText: string): unknown {
+  let cleaned = responseText
+    .replace(/```json\s*/gi, "")
+    .replace(/```\s*/g, "")
+    .trim();
+
+  const jsonStart = cleaned.search(/[\[{]/);
+  if (jsonStart === -1) {
+    throw new AnalyzeParseError("No JSON object found in backend response.");
+  }
+
+  const opening = cleaned[jsonStart];
+  const closing = opening === "[" ? "]" : "}";
+  const jsonEnd = cleaned.lastIndexOf(closing);
+  if (jsonEnd === -1 || jsonEnd < jsonStart) {
+    throw new AnalyzeParseError("No valid JSON boundary found in backend response.");
+  }
+
+  cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const repaired = cleaned
+      .replace(/,\s*}/g, "}")
+      .replace(/,\s*]/g, "]")
+      .replace(/[\x00-\x1F\x7F]/g, "");
+
+    return JSON.parse(repaired);
+  }
+}
+
 /** Convert a real API response into the normalised UI model */
 export function fromApiResponse(res: AnalyzeApiResponse): AnalysisResult {
   const record = res as unknown as Record<string, unknown>;
