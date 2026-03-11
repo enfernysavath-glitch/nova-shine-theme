@@ -54,6 +54,7 @@ export interface AnalysisResult {
   id: string;
   source: "backend" | "mock";
   analysisSource: "preview" | "engine";
+  mockFallbackReason?: string;
 
   /* file metadata */
   fileName: string;
