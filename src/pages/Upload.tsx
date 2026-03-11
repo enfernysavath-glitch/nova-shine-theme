@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Upload as UploadIcon, FileAudio, Loader2, X, Play, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { generateMockAnalysis } from "@/lib/mockAnalysis";
-import { analyzeFile } from "@/lib/api";
+import { analyzeFile, AnalyzeParseError, AnalyzeRequestError } from "@/lib/api";
 import { saveAnalysis } from "@/lib/storage";
 
 export default function Upload() {
