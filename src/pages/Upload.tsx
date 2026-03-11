@@ -47,36 +47,42 @@ export default function Upload() {
     setError(null);
     setAnalyzeStep(0);
 
+    const stepInterval = window.setInterval(() => {
+      setAnalyzeStep((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
+    }, 500);
+
     try {
-      for (let i = 0; i < steps.length; i++) {
-        setAnalyzeStep(i);
-        await new Promise((r) => setTimeout(r, 400));
-      }
-
-      let result: ReturnType<typeof generateMockAnalysis> | null = null;
-
       if (fileObj) {
-        try {
-          const apiResult = await analyzeFile(fileObj);
-          if (apiResult) {
-            console.log("[TuneTrace] Backend response mapped successfully:", apiResult);
-            result = apiResult;
-          }
-        } catch (apiErr) {
-          console.warn("[TuneTrace] Backend request failed, falling back to mock:", apiErr);
+        const apiResult = await analyzeFile(fileObj);
+
+        if (apiResult) {
+          console.log("[TuneTrace] Backend response mapped successfully:", apiResult);
+          navigate(`/results/${apiResult.id}`, { state: { result: apiResult } });
+          return;
         }
       }
 
-      if (!result) {
-        console.log("[TuneTrace] Using mock analysis data");
-        result = generateMockAnalysis(fileName, fileSize);
+      console.log("[TuneTrace] Using mock analysis data");
+      const mockResult = generateMockAnalysis(fileName, fileSize);
+      navigate(`/results/${mockResult.id}`, { state: { result: mockResult } });
+    } catch (err) {
+      if (err instanceof AnalyzeRequestError) {
+        console.warn("[TuneTrace] Backend request failed, falling back to mock:", err);
+        const mockResult = generateMockAnalysis(fileName, fileSize);
+        navigate(`/results/${mockResult.id}`, { state: { result: mockResult } });
+        return;
       }
 
-      navigate(`/results/${result.id}`, { state: { result } });
-    } catch (err) {
+      if (err instanceof AnalyzeParseError) {
+        console.error("[TuneTrace] Frontend parsing/mapping error:", err);
+        setError("Analysis response format is invalid. Please try again.");
+        return;
+      }
+
       console.error("[TuneTrace] Unexpected error during analysis:", err);
       setError(err instanceof Error ? err.message : "Analysis failed unexpectedly.");
     } finally {
+      window.clearInterval(stepInterval);
       setIsAnalyzing(false);
     }
   };

@@ -21,6 +21,26 @@ export interface AnalyzeApiResponse {
   mood_emoji?: string;
 }
 
+export class AnalyzeRequestError extends Error {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message);
+    this.name = "AnalyzeRequestError";
+    if (options?.cause) {
+      this.cause = options.cause;
+    }
+  }
+}
+
+export class AnalyzeParseError extends Error {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message);
+    this.name = "AnalyzeParseError";
+    if (options?.cause) {
+      this.cause = options.cause;
+    }
+  }
+}
+
 /** Mood lookup derived from energy + key (placeholder until backend provides it) */
 const deriveMood = (energy: number): { label: string; emoji: string } => {
   if (energy >= 80) return { label: "Energetic", emoji: "⚡" };
@@ -71,33 +91,86 @@ function formatDuration(sec: number | null): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+function readString(record: Record<string, unknown>, field: string): string {
+  const value = record[field];
+  if (typeof value !== "string") {
+    throw new AnalyzeParseError(`Invalid backend field: ${field} (expected string)`);
+  }
+  return value;
+}
+
+function readNumber(record: Record<string, unknown>, field: string): number {
+  const value = record[field];
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new AnalyzeParseError(`Invalid backend field: ${field} (expected number)`);
+  }
+  return value;
+}
+
+function readNullableNumber(record: Record<string, unknown>, field: string): number | null {
+  const value = record[field];
+  if (value == null) return null;
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new AnalyzeParseError(`Invalid backend field: ${field} (expected number|null)`);
+  }
+  return value;
+}
+
+function readNumberArray(record: Record<string, unknown>, field: string): number[] {
+  const value = record[field];
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "number" || !Number.isFinite(item))) {
+    throw new AnalyzeParseError(`Invalid backend field: ${field} (expected number[])`);
+  }
+  return value;
+}
+
 /** Convert a real API response into the normalised UI model */
 export function fromApiResponse(res: AnalyzeApiResponse): AnalysisResult {
-  const derived = deriveMood(res.energy_score);
-  const mood = res.mood_label
-    ? { label: res.mood_label, emoji: res.mood_emoji ?? derived.emoji }
+  const record = res as unknown as Record<string, unknown>;
+
+  const fileName = readString(record, "file_name");
+  const fileSize = readNumber(record, "file_size");
+  const uploadedAt = readString(record, "uploaded_at");
+  const durationSec = readNullableNumber(record, "duration_sec");
+  const bpm = readNumber(record, "bpm");
+  const tuningOffsetCents = readNumber(record, "tuning_offset_cents");
+  const estimatedReferenceHz = readNumber(record, "estimated_reference_hz");
+  const nearestReferenceBucket = readString(record, "nearest_reference_bucket");
+  const keySignature = readString(record, "key_signature");
+  const bassIntensity = readNumber(record, "bass_intensity");
+  const brightness = readNumber(record, "brightness");
+  const energyScore = readNumber(record, "energy_score");
+  const confidenceScore = readNumber(record, "confidence_score");
+  const spectrumBands = readNumberArray(record, "spectrum_bands");
+
+  const derived = deriveMood(energyScore);
+  const moodLabel = typeof record.mood_label === "string" ? record.mood_label : undefined;
+  const moodEmoji = typeof record.mood_emoji === "string" ? record.mood_emoji : undefined;
+  const mood = moodLabel
+    ? { label: moodLabel, emoji: moodEmoji ?? derived.emoji }
     : derived;
-  const dur = formatDuration(res.duration_sec);
+
+  const dur = formatDuration(durationSec);
 
   return {
     id: crypto.randomUUID(),
     analysisSource: "engine",
-    fileName: res.file_name,
-    fileSize: formatBytes(res.file_size),
-    uploadedAt: res.uploaded_at,
-    fileDuration: res.duration_sec != null ? dur : null,
-    tuningReference: res.estimated_reference_hz,
-    tuningLabel: res.nearest_reference_bucket,
-    tuningDeviation: res.tuning_offset_cents,
-    bpm: res.bpm,
-    energy: res.energy_score,
+    fileName,
+    fileSize: formatBytes(fileSize),
+    uploadedAt,
+    fileDuration: durationSec != null ? dur : null,
+    tuningReference: estimatedReferenceHz,
+    tuningLabel: nearestReferenceBucket,
+    tuningDeviation: tuningOffsetCents,
+    bpm,
+    energy: energyScore,
     mood: mood.label,
     moodEmoji: mood.emoji,
-    key: res.key_signature,
-    bassIntensity: res.bass_intensity,
-    brightness: res.brightness,
-    confidence: res.confidence_score,
-    spectrum: res.spectrum_bands,
+    key: keySignature,
+    bassIntensity,
+    brightness,
+    confidence: confidenceScore,
+    spectrum: spectrumBands,
     duration: dur,
     analyzedAt: new Date().toISOString(),
   };
@@ -115,20 +188,32 @@ export async function analyzeFile(file: File): Promise<AnalysisResult | null> {
   const form = new FormData();
   form.append("file", file);
 
-  const res = await fetch(`${API_BASE}/analyze`, {
-    method: "POST",
-    body: form,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/analyze`, {
+      method: "POST",
+      body: form,
+    });
+  } catch (requestErr) {
+    throw new AnalyzeRequestError("Failed to reach analysis backend.", { cause: requestErr });
+  }
 
-  if (!res.ok) throw new Error(`Analysis failed (${res.status})`);
+  if (!res.ok) throw new AnalyzeRequestError(`Analysis failed (${res.status})`);
 
-  const json = await res.json();
+  let json: unknown;
+  try {
+    json = await res.json();
+  } catch (jsonErr) {
+    console.error("[TuneTrace] Failed to parse backend JSON:", jsonErr);
+    throw new AnalyzeParseError("Backend returned invalid JSON.", { cause: jsonErr });
+  }
+
   console.log("[TuneTrace] Raw API response:", json);
 
   try {
     return fromApiResponse(json as AnalyzeApiResponse);
   } catch (parseErr) {
     console.error("[TuneTrace] Failed to parse API response:", parseErr, json);
-    throw new Error("Failed to parse analysis response from backend.");
+    throw new AnalyzeParseError("Failed to parse analysis response from backend.", { cause: parseErr });
   }
 }
