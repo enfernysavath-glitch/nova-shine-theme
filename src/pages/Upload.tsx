@@ -59,7 +59,7 @@ export default function Upload() {
 
   const handleAnalyze = () => {
     if (!file) return;
-    runAnalysis(file.name, file.size);
+    runAnalysis(file.name, file.size, file);
   };
 
   const handleDemo = () => {
