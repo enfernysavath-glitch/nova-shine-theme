@@ -17,7 +17,7 @@ export default function Upload() {
 
   useEffect(() => {
     if (searchParams.get("demo") === "true") {
-      runAnalysis("Demo Track — Stellar Drift.mp3", 4_200_000);
+      runAnalysis("Sample — Neon Cascade.mp3", 4_200_000);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -86,6 +86,11 @@ export default function Results() {
           <ArrowLeft className="w-3.5 h-3.5" /> New analysis
         </Link>
 
+        {/* Prototype notice */}
+        <div className="mb-4 px-3.5 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[12px] text-amber-200/90">
+          This current version shows a preview analysis structure. True audio analysis is not fully connected yet.
+        </div>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div className="flex items-center gap-3 min-w-0">
@@ -98,6 +103,9 @@ export default function Results() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-[11px] font-medium text-amber-300">
+              Preview Analysis
+            </div>
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 border border-primary/15 text-[11px] font-medium text-primary">
               <ShieldCheck className="w-3 h-3" />
               {result.confidence}% confidence
