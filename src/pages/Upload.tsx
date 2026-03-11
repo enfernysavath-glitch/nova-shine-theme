@@ -57,7 +57,7 @@ export default function Upload() {
   };
 
   const handleDemo = () => {
-    runAnalysis("Demo Track — Stellar Drift.mp3", 4_200_000);
+    runAnalysis("Sample — Neon Cascade.mp3", 4_200_000);
   };
 
   return (
