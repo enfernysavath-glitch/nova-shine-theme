@@ -122,6 +122,13 @@ export async function analyzeFile(file: File): Promise<AnalysisResult | null> {
 
   if (!res.ok) throw new Error(`Analysis failed (${res.status})`);
 
-  const json: AnalyzeApiResponse = await res.json();
-  return fromApiResponse(json);
+  const json = await res.json();
+  console.log("[TuneTrace] Raw API response:", json);
+
+  try {
+    return fromApiResponse(json as AnalyzeApiResponse);
+  } catch (parseErr) {
+    console.error("[TuneTrace] Failed to parse API response:", parseErr, json);
+    throw new Error("Failed to parse analysis response from backend.");
+  }
 }
