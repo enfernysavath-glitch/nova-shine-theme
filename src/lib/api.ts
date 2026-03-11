@@ -52,6 +52,7 @@ const deriveMood = (energy: number): { label: string; emoji: string } => {
 /** Normalised model consumed by every UI component */
 export interface AnalysisResult {
   id: string;
+  source: "backend" | "mock";
   analysisSource: "preview" | "engine";
 
   /* file metadata */

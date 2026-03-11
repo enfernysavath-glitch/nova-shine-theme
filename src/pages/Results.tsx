@@ -73,7 +73,8 @@ export default function Results() {
     setSaved(true);
   };
 
-  const isPreview = !result.analysisSource || result.analysisSource === "preview";
+  const source = result.source ?? (result.analysisSource === "engine" ? "backend" : "mock");
+  const isPreview = source === "mock";
 
   const tuningColor =
     result.tuningReference === 440
