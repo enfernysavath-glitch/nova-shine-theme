@@ -196,12 +196,9 @@ export default function Upload() {
         )}
 
         {/* Demo disclaimer */}
-        <div className="mt-5 w-full flex items-start gap-2.5 p-3 rounded-lg bg-surface-2/50 border border-border/50 text-xs text-muted-foreground">
-          <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/50" />
-          <span>
-            This version uses mock data for demonstration. Real audio processing is coming in a future update.
-          </span>
-        </div>
+        <p className="mt-4 text-center text-[11px] text-muted-foreground/60">
+          Current version uses demo analysis data for product preview.
+        </p>
       </div>
     </div>
   );
