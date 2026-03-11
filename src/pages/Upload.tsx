@@ -15,7 +15,6 @@ export default function Upload() {
 
   const steps = ["Reading file", "Estimating tuning", "Detecting BPM", "Profiling energy", "Interpreting mood", "Building spectrum"];
 
-  // Auto-trigger demo if ?demo=true
   useEffect(() => {
     if (searchParams.get("demo") === "true") {
       runAnalysis("Demo Track — Stellar Drift.mp3", 4_200_000);
@@ -43,15 +42,13 @@ export default function Upload() {
   const runAnalysis = async (fileName: string, fileSize: number) => {
     setIsAnalyzing(true);
     setAnalyzeStep(0);
-
     for (let i = 0; i < steps.length; i++) {
       setAnalyzeStep(i);
       await new Promise((r) => setTimeout(r, 400));
     }
-
     const result = generateMockAnalysis(fileName, fileSize);
-    saveAnalysis(result);
-    navigate(`/results/${result.id}`);
+    // Don't auto-save — user decides on Results page
+    navigate(`/results/${result.id}`, { state: { result } });
   };
 
   const handleAnalyze = () => {
@@ -64,28 +61,31 @@ export default function Upload() {
   };
 
   return (
-    <div className="pt-14 min-h-screen">
-      <div className="max-w-xl mx-auto px-4 py-12">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
+    <div className="pt-14 min-h-screen flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-6 w-full">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-1.5">
             Analyze a Track
           </h1>
           <p className="text-muted-foreground text-sm">
-            Upload an audio file to get an estimated analysis of its properties.
+            Upload an MP3 or WAV to get an estimated analysis report.
           </p>
         </div>
 
-        {/* Drop zone */}
+        {/* Drop zone — large and prominent */}
         <div
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
-          className={`relative rounded-xl border-2 border-dashed p-10 text-center gentle-animation cursor-pointer ${
+          className={`relative w-full rounded-2xl border-2 border-dashed gentle-animation cursor-pointer ${
+            isAnalyzing ? "py-16" : "py-14 md:py-20"
+          } text-center ${
             isDragging
-              ? "border-primary bg-primary/5 glow-cyan"
+              ? "border-primary bg-primary/5 glow-cyan-strong"
               : file
               ? "border-primary/30 bg-card"
-              : "border-border hover:border-primary/20 bg-card/50 hover:bg-card"
+              : "border-border hover:border-primary/20 bg-card/40 hover:bg-card/70"
           }`}
           onClick={() => {
             if (!file && !isAnalyzing) {
@@ -101,20 +101,19 @@ export default function Upload() {
           }}
         >
           {isAnalyzing ? (
-            <div className="space-y-4">
-              <Loader2 className="w-10 h-10 text-primary mx-auto animate-spin" />
+            <div className="space-y-5 px-4">
+              <Loader2 className="w-12 h-12 text-primary mx-auto animate-spin" />
               <div>
-                <p className="text-base font-semibold">Analyzing...</p>
-                <p className="text-xs text-muted-foreground mt-1 font-mono">
+                <p className="text-lg font-semibold">Analyzing track...</p>
+                <p className="text-sm text-muted-foreground mt-1 font-mono">
                   {steps[analyzeStep]}
                 </p>
               </div>
-              {/* Step indicators */}
-              <div className="flex justify-center gap-1.5 pt-1">
+              <div className="flex justify-center gap-1.5">
                 {steps.map((_, i) => (
                   <div
                     key={i}
-                    className={`w-1.5 h-1.5 rounded-full gentle-animation ${
+                    className={`w-2 h-2 rounded-full gentle-animation ${
                       i <= analyzeStep ? "bg-primary" : "bg-border"
                     }`}
                   />
@@ -122,69 +121,86 @@ export default function Upload() {
               </div>
             </div>
           ) : file ? (
-            <div className="space-y-3">
-              <FileAudio className="w-10 h-10 text-primary mx-auto" />
+            <div className="space-y-4 px-4">
+              <FileAudio className="w-12 h-12 text-primary mx-auto" />
               <div>
-                <p className="text-base font-semibold">{file.name}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-lg font-semibold">{file.name}</p>
+                <p className="text-sm text-muted-foreground">
                   {(file.size / (1024 * 1024)).toFixed(1)} MB
                 </p>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground gentle-animation"
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground gentle-animation"
               >
-                <X className="w-3 h-3" /> Remove
+                <X className="w-3 h-3" /> Remove file
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
-              <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/15 flex items-center justify-center mx-auto">
-                <UploadIcon className="w-6 h-6 text-primary" />
+            <div className="space-y-4 px-4">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/15 flex items-center justify-center mx-auto">
+                <UploadIcon className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <p className="text-base font-semibold">Drop your audio file here</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  MP3 or WAV — up to 50 MB
+                <p className="text-lg font-semibold">Drop your audio file here</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Supports MP3 and WAV — up to 50 MB
                 </p>
               </div>
-              <p className="text-xs text-muted-foreground/60">or click to browse</p>
+              <p className="text-xs text-muted-foreground/50">or click anywhere to browse</p>
             </div>
           )}
         </div>
 
-        {/* Actions */}
+        {/* Action buttons */}
         {!isAnalyzing && (
-          <div className="mt-5 space-y-3">
-            {file && (
+          <div className="mt-4 w-full space-y-2.5">
+            {file ? (
               <Button
                 size="lg"
                 onClick={handleAnalyze}
-                className="w-full bg-primary text-primary-foreground hover:bg-cyan-glow font-semibold glow-cyan"
+                className="w-full bg-primary text-primary-foreground hover:bg-cyan-glow font-semibold glow-cyan h-12 text-base"
               >
                 Run Analysis
               </Button>
-            )}
-
-            {!file && (
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleDemo}
-                className="w-full border-border hover:border-primary/30 hover:bg-primary/5"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Try with a Sample Track
-              </Button>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-2.5">
+                <Button
+                  size="lg"
+                  onClick={() => {
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.accept = ".mp3,.wav";
+                    input.onchange = (e) => {
+                      const f = (e.target as HTMLInputElement).files?.[0];
+                      if (f) handleFile(f);
+                    };
+                    input.click();
+                  }}
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-cyan-glow font-semibold glow-cyan h-12 text-base"
+                >
+                  <UploadIcon className="w-4 h-4 mr-2" />
+                  Choose File
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleDemo}
+                  className="flex-1 border-border hover:border-primary/30 hover:bg-primary/5 h-12"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Load Demo Track
+                </Button>
+              </div>
             )}
           </div>
         )}
 
-        {/* Demo note */}
-        <div className="mt-6 flex items-start gap-2 p-3 rounded-lg bg-surface-2 border border-border text-xs text-muted-foreground">
-          <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/60" />
+        {/* Demo disclaimer */}
+        <div className="mt-5 w-full flex items-start gap-2.5 p-3 rounded-lg bg-surface-2/50 border border-border/50 text-xs text-muted-foreground">
+          <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/50" />
           <span>
-            Results are currently generated using mock data for demonstration purposes. Real audio analysis will be available in a future update.
+            This version uses mock data for demonstration. Real audio processing is coming in a future update.
           </span>
         </div>
       </div>
