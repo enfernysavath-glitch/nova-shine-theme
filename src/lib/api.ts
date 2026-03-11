@@ -73,7 +73,10 @@ function formatDuration(sec: number | null): string {
 
 /** Convert a real API response into the normalised UI model */
 export function fromApiResponse(res: AnalyzeApiResponse): AnalysisResult {
-  const mood = deriveMood(res.energy_score);
+  const derived = deriveMood(res.energy_score);
+  const mood = res.mood_label
+    ? { label: res.mood_label, emoji: res.mood_emoji ?? derived.emoji }
+    : derived;
   const dur = formatDuration(res.duration_sec);
 
   return {
