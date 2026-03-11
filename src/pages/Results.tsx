@@ -115,7 +115,7 @@ export default function Results() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            {isPreview && (
+            {isPreview ? (
               <>
                 <Badge variant="outline" className="text-[11px] border-amber-500/30 text-amber-300 bg-amber-500/10">
                   Preview
@@ -124,6 +124,10 @@ export default function Results() {
                   Processing Engine Not Connected
                 </Badge>
               </>
+            ) : (
+              <Badge variant="outline" className="text-[11px] border-emerald-500/30 text-emerald-300 bg-emerald-500/10">
+                Live Analysis
+              </Badge>
             )}
           </div>
         </div>
