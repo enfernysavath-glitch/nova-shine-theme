@@ -22,22 +22,22 @@ export interface AnalyzeApiResponse {
 }
 
 export class AnalyzeRequestError extends Error {
+  public cause?: unknown;
+
   constructor(message: string, options?: { cause?: unknown }) {
     super(message);
     this.name = "AnalyzeRequestError";
-    if (options?.cause) {
-      this.cause = options.cause;
-    }
+    this.cause = options?.cause;
   }
 }
 
 export class AnalyzeParseError extends Error {
+  public cause?: unknown;
+
   constructor(message: string, options?: { cause?: unknown }) {
     super(message);
     this.name = "AnalyzeParseError";
-    if (options?.cause) {
-      this.cause = options.cause;
-    }
+    this.cause = options?.cause;
   }
 }
 
