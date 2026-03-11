@@ -52,6 +52,7 @@ const deriveMood = (energy: number): { label: string; emoji: string } => {
 /** Normalised model consumed by every UI component */
 export interface AnalysisResult {
   id: string;
+  source: "backend" | "mock";
   analysisSource: "preview" | "engine";
 
   /* file metadata */
@@ -156,6 +157,7 @@ export function fromApiResponse(res: AnalyzeApiResponse): AnalysisResult {
     id: typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
       ? crypto.randomUUID()
       : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
+    source: "backend",
     analysisSource: "engine",
     fileName,
     fileSize: formatBytes(fileSize),
