@@ -142,12 +142,11 @@ export default function Upload() {
                 <UploadIcon className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <p className="text-lg font-semibold">Drop your audio file here</p>
+                <p className="text-lg font-semibold">Upload MP3 or WAV</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Supports MP3 and WAV — up to 50 MB
+                  Drag & drop or click to browse — up to 50 MB
                 </p>
               </div>
-              <p className="text-xs text-muted-foreground/50">or click anywhere to browse</p>
             </div>
           )}
         </div>
