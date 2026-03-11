@@ -185,7 +185,12 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL as string | undefined;
  * Returns `null` when no backend is configured so the caller can fall back to mock data.
  */
 export async function analyzeFile(file: File): Promise<AnalysisResult | null> {
-  if (!API_BASE) return null;
+  if (!API_BASE) {
+    console.log("[TuneTrace] No VITE_API_BASE_URL configured, source chosen: mock");
+    return null;
+  }
+
+  console.log("[TuneTrace] Backend request started →", `${API_BASE}/analyze`);
 
   const form = new FormData();
   form.append("file", file);
@@ -197,8 +202,11 @@ export async function analyzeFile(file: File): Promise<AnalysisResult | null> {
       body: form,
     });
   } catch (requestErr) {
+    console.error("[TuneTrace] Network error reaching backend:", requestErr);
     throw new AnalyzeRequestError("Failed to reach analysis backend.", { cause: requestErr });
   }
+
+  console.log("[TuneTrace] Backend response received, status:", res.status);
 
   if (!res.ok) throw new AnalyzeRequestError(`Analysis failed (${res.status})`);
 
@@ -213,7 +221,9 @@ export async function analyzeFile(file: File): Promise<AnalysisResult | null> {
   console.log("[TuneTrace] Raw API response:", json);
 
   try {
-    return fromApiResponse(json as AnalyzeApiResponse);
+    const mapped = fromApiResponse(json as AnalyzeApiResponse);
+    console.log("[TuneTrace] Source chosen: backend — analysisSource:", mapped.analysisSource);
+    return mapped;
   } catch (parseErr) {
     console.error("[TuneTrace] Failed to parse API response:", parseErr, json);
     throw new AnalyzeParseError("Failed to parse analysis response from backend.", { cause: parseErr });
