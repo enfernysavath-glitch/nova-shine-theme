@@ -129,7 +129,7 @@ export default function Results() {
               </>
             ) : (
               <Badge variant="outline" className="text-[11px] border-emerald-500/30 text-emerald-300 bg-emerald-500/10">
-                Live Analysis
+                Analysis Complete
               </Badge>
             )}
           </div>
